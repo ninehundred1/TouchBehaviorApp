@@ -15,7 +15,11 @@ from kivy.clock import Clock
 from kivy.graphics import Rectangle, Color, Canvas
 from functools import partial
 from kivy.uix.popup import Popup
+from kivy.uix.dropdown import DropDown
 
+import Touch_Training_menu_classes
+
+import sys
 from random import *
  
 #graphics
@@ -35,7 +39,7 @@ class Paradigm_Base(Widget):
     text string.
 
     parameter:
-    inherits from Widget, as in Kivy syntax
+    inherits from Widget, as in Kivy syntaxthismodule thismodule 
     '''
 
     buttonList = []
@@ -132,7 +136,7 @@ class Start_Screen(Widget):
             Color(1,0,0,0.5)
             Rectangle(pos=(Window.width*0.1,  Window.height*0.2),
                     size=(Window.width*0.8, Window.height*0.4))
-            Label(text="Welcome, please choose", pos=(Window.width*0.1,  Window.height*0.3),
+            t = Label(text="Welcome, please choose", color = (1,1,0,1), pos=(Window.width*0.1,  Window.height*0.3),
                     size=(Window.width*0.8, Window.height*0.4), font_size = 48)
 
         
@@ -158,6 +162,7 @@ class Start_Screen(Widget):
         self.layout.add_widget(start_button)
         self.layout.add_widget(continue_button)
 
+
     def clear_screen(self, instance):
         self.parent.canvas.clear()
         self.remove_widget(self.layout)
@@ -173,6 +178,7 @@ class Start_Screen(Widget):
         
         
     def continue_prev(self, instance):
+        self.clear_screen(instance)
         print 'cont'
 
 
@@ -277,8 +283,20 @@ class Paradigm_Two_choice_images(Paradigm_Base):
 
 
 class TopMenu(Paradigm_Base):
+    '''
+    This is the widget for the top menu. The buttons that are displayed are 
+    defined in Button list. Each of those buttons has a drop down list of 
+    further buttons, defined in menu_items.
+    If a button gets pressed, the function with the same name of the button 
+    is called from the module file Touch_Training_menus_classes.py
+
+    This class inherits from the Paradigm_Base class.
+
+    parameter:
+    inherits from Paradigm_Base
+    '''
 #setup the menu button names, inherit from above
-    buttonList = ['Chose Paradigm', 'Paradigm Setup', 'Show Data', 'Pause', 'Stop','Copy data to USB']
+    buttonList = ['Choose Paradigm', 'Paradigm Setup', 'Show Data', 'Pause/Stop', 'Copy data to USB']
  
     def __init__(self, **kwargs):
         super(TopMenu, self).__init__(**kwargs)
@@ -286,22 +304,56 @@ class TopMenu(Paradigm_Base):
         self.layout = BoxLayout(orientation = 'horizontal')
         self.layout.width = Window.width
         self.layout.height = Window.height*0.05
-        #self.layout.x = Window.width/2 - self.layout.width/2
         self.layout.x = 0
         self.layout.y =  self.layout.height*19
         self.add_widget(self.layout)
-        self.menu_color = [.8, 0,0, .9]
-        self.menu_color_letters = [0.8, 0, 0, .4]
- 
-        #self.msg = Label(text = 'Flappy Ship')
-        #self.msg.font_size = Window.width*0.07
-        #self.msg.pos = (Window.width*0.45,Window.height*0.75)
-        #self.add_widget(self.msg)
-        #BG IMAGE
-    def buildUp(self):
-    #self.colorWindow()
-        self.addButtons()
+        self.menu_color = [.8, .7,0, .9]
+        self.menu_color_letters = [0.8, 1, 1, 1]
+
+        self.menu_items = {
+                        0: ['Two Images', 'Mirc'],
+                        1: ['Interval', 'Penalty'],
+                        2: ['Plot Performance', 'Plot Responses'],
+                        3: ['Pause', 'Continue','Abort'],
+                        4: ['Copy to USB']}
+                            
      
+  
+    def addButtons(self):
+        #now add as many buttons as you like
+        for i, button_text_label in enumerate(self.buttonList):
+            temp_button = MyButton(text = button_text_label)
+            #if these two colors are not redefined in the inherited class, the default is used
+            temp_button.color = self.menu_color_letters
+            temp_button.background_color =  [.8, .7,0, .9]
+            #now add dropdown buttons
+            dropdown = DropDown()
+            for submenu_string in self.menu_items[i]:
+                # when adding widgets, we need to specify the height manually (disabling
+                # the size_hint_y) so the dropdown can calculate the area it needs.
+                btn = Button(text=submenu_string, size_hint_y=None, height=44)
+                btn.background_color =  [.8, .9,.7, .9]
+                # for each button, attach a callback that will call the select() method
+                # on the dropdown. We'll pass the text of the button as the data of the
+                # selection.
+                btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+
+                #then add the button inside the dropdown
+                dropdown.add_widget(btn)
+            #bind the dropdown to the main menu button
+            temp_button.bind(on_release = dropdown.open) 
+            dropdown.bind(on_select=lambda instance, x: self.menu_function_handler(x))
+            #get info about what has been pressed
+            #dropdown.bind(on_select=lambda instance, x: setattr(temp_button, 'text', x))
+            self.layout.add_widget(temp_button)
+ 
+    #call the function matching the string (make sure the name exist, without space)
+    def menu_function_handler(self,button_text_label):
+        #thismodule = sys.modules[__name__]
+        function=getattr(Touch_Training_menu_classes,button_text_label.replace(" ", "")) 
+        #this is calling the same function as the name of button. 
+        function('aaaaassss')  
+
 
 
  
