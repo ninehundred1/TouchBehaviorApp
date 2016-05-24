@@ -14,6 +14,7 @@ from kivy.properties import ObjectProperty
 from kivy.clock import Clock
 from kivy.graphics import Rectangle, Color, Canvas
 from functools import partial
+from kivy.uix.popup import Popup
 
 from random import *
  
@@ -25,7 +26,7 @@ Window.clearcolor = (0,0,0,1.)
 
  
 
-class SmartMenu(Widget):
+class Paradigm_Base(Widget):
     '''
     Main parent class for paradigms to be implemented. To preserve style and interfaces
     this class is used for all menu and button functions for all paradigms, and then inherited by other
@@ -58,7 +59,7 @@ class SmartMenu(Widget):
         #the 'on_release' flag, which is what is to be done when a button is released.
     
         self.register_event_type('on_button_release')  
-        super(SmartMenu, self).__init__(**kwargs)
+        super(Paradigm_Base, self).__init__(**kwargs)
         #basic parameters that can be overwritten in child class
         self.menu_color = [.8, .8, 1, .9]
         self.menu_color_letters = [0.4, .4, 0.4, .9]
@@ -89,7 +90,6 @@ class SmartMenu(Widget):
         #now we send our new event with its name to the dispatcher
         self.dispatch('on_button_release') 
 
-
     def addButtons(self):
         #now add as many buttons as you like
         for button_text_label in self.buttonList:
@@ -108,8 +108,80 @@ class SmartMenu(Widget):
 
 
 
+class Start_Screen(Widget):
+    '''
+    Start screen that shows two images from file, with a button underneath the image.
+    When the right button is clicked, there is a water reward.
+    Correct and incorrect presses are stores to be analyzed for performance.
 
-class Paradigm_Two_choice_images(SmartMenu):
+    This class inherits from the main menu class and sets the choice buttons
+    as well as adds an image as the stimulus.
+    Further functionality is added
+
+    parameter:
+    inherits from Paradigm_Base
+    '''
+   
+    def __init__(self, **kwargs):
+        super(Start_Screen, self).__init__(**kwargs)
+      
+
+        
+        #add background color and text
+        with self.canvas.before:
+            Color(1,0,0,0.5)
+            Rectangle(pos=(Window.width*0.1,  Window.height*0.2),
+                    size=(Window.width*0.8, Window.height*0.4))
+            Label(text="Welcome, please choose", pos=(Window.width*0.1,  Window.height*0.3),
+                    size=(Window.width*0.8, Window.height*0.4), font_size = 48)
+
+        
+
+        #add float layout
+        self.layout =FloatLayout()
+        self.layout.width = Window.width*0.7
+        self.layout.height = Window.height*0.7
+        self.layout.x = Window.height*0.3
+        self.layout.y = Window.width*0.1
+        self.add_widget(self.layout)
+
+     
+        #now add text and buttons, in relation to the float layout
+        start_button = Button(text='Start new paradigm',   size_hint=(.3, .2),
+                pos_hint={'x':.005, 'y':.2})
+        start_button.bind(on_press= self.start_new)
+ 
+        continue_button = Button(text='Continue previous', size_hint=(.3, .2),
+                pos_hint={'x':.5, 'y':.2})
+        continue_button.bind(on_press= self.continue_prev)
+
+        self.layout.add_widget(start_button)
+        self.layout.add_widget(continue_button)
+
+    def clear_screen(self, instance):
+        self.parent.canvas.clear()
+        self.remove_widget(self.layout)
+        self.sm2 = TopMenu()
+        self.sm2.buildUp()
+        self.parent.add_widget(self.sm2)
+
+
+    def start_new(self,instance):
+        #self.sm.buildUp()
+        self.clear_screen(instance)
+        print 'new'
+        
+        
+    def continue_prev(self, instance):
+        print 'cont'
+
+
+
+    
+        
+
+
+class Paradigm_Two_choice_images(Paradigm_Base):
     '''
     Paradigm that shows two images from file, with a button underneath the image.
     When the right button is clicked, there is a water reward.
@@ -120,7 +192,7 @@ class Paradigm_Two_choice_images(SmartMenu):
     Further functionality is added
 
     parameter:
-    inherits from SmartMenu
+    inherits from Paradigm_Base
     '''
     #the buttons we want
     buttonList = ['left', 'right']
@@ -204,12 +276,12 @@ class Paradigm_Two_choice_images(SmartMenu):
         
 
 
-class ShowTopMenu(SmartMenu):
+class TopMenu(Paradigm_Base):
 #setup the menu button names, inherit from above
     buttonList = ['Chose Paradigm', 'Paradigm Setup', 'Show Data', 'Pause', 'Stop','Copy data to USB']
  
     def __init__(self, **kwargs):
-        super(ShowTopMenu, self).__init__(**kwargs)
+        super(TopMenu, self).__init__(**kwargs)
         #overwrite the basic layout from parent class
         self.layout = BoxLayout(orientation = 'horizontal')
         self.layout.width = Window.width
@@ -226,7 +298,12 @@ class ShowTopMenu(SmartMenu):
         #self.msg.pos = (Window.width*0.45,Window.height*0.75)
         #self.add_widget(self.msg)
         #BG IMAGE
-       
+    def buildUp(self):
+    #self.colorWindow()
+        self.addButtons()
+     
+
+
  
 class WidgetDrawer(Widget):
 #This widget is used to draw all of the objects on the screen
@@ -685,34 +762,14 @@ class ClientApp(App):
         #Start the game clock (runs update function once every (1/60) seconds
         #Clock.schedule_interval(app.update, 1.0/60.0)
         #add the start menu
-        self.sm = Paradigm_Two_choice_images()
-        self.sm.buildUp()
-        self.sm2 = ShowTopMenu()
-        self.sm2.buildUp()
-
-        def check_button(obj):
-        #check to see which button was pressed
-            if self.sm.buttonText == 'start':
-                #remove menu
-                self.parent.remove_widget(self.sm)
-                #start the game
-                print ' we should start the game now'
-                Clock.unschedule(self.app.update)
-                Clock.schedule_interval(self.app.update, 1.0/60.0)
-                try:
-                    self.parent.remove_widget(self.aboutText)
-                except:
-                    pass
-            if self.sm.buttonText == 'about':
-                self.aboutText = Label(text = 'Flappy Ship is made by Molecular Flow Games \n Check out: https://kivyspacegame.wordpress.com')
-                self.aboutText.pos = (Window.width*0.45,Window.height*0.35)
-                self.parent.add_widget(self.aboutText)
-        #bind a callback function that repsonds to event 'on_button_release' by calling function check_button
-        self.sm.bind(on_button_release = check_button)
-        #setup listeners for Paradigm_Two_choice_images
+        self.sm = Start_Screen()
         self.parent.add_widget(self.sm)
-        self.parent.add_widget(self.sm2)
         self.parent.add_widget(self.app) #use this hierarchy to make it easy to deal w/buttons
+
+        #self.sm2 = TopMenu()
+        #self.sm2.buildUp()
+        #self.parent.add_widget(self.sm2)
+
         return self.parent
  
 if __name__ == '__main__' :
