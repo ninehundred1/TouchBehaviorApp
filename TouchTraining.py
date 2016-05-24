@@ -114,22 +114,14 @@ class Paradigm_Base(Widget):
 
 class Start_Screen(Widget):
     '''
-    Start screen that shows two images from file, with a button underneath the image.
-    When the right button is clicked, there is a water reward.
-    Correct and incorrect presses are stores to be analyzed for performance.
-
-    This class inherits from the main menu class and sets the choice buttons
-    as well as adds an image as the stimulus.
-    Further functionality is added
-
-    parameter:
-    inherits from Paradigm_Base
+    Start screen that shows the options to start new or load previous
+ 
     '''
    
     def __init__(self, **kwargs):
         super(Start_Screen, self).__init__(**kwargs)
       
-
+      
         
         #add background color and text
         with self.canvas.before:
@@ -138,6 +130,8 @@ class Start_Screen(Widget):
                     size=(Window.width*0.8, Window.height*0.4))
             t = Label(text="Welcome, please choose", color = (1,1,0,1), pos=(Window.width*0.1,  Window.height*0.3),
                     size=(Window.width*0.8, Window.height*0.4), font_size = 48)
+            #somehow below is required or the first buttons do not expand
+            w = Label(text='')
 
         
 
@@ -652,15 +646,12 @@ class GUI(Widget):
         super(GUI, self).__init__(**kwargs)
  
         #setup label for the score
-        score_string = 'Cor%(bin 100): 54 57 61 57 70'
-        self.score = Label(text = score_string, color=[1,0,0,1])
-        self.score.y = Window.height*0.85
-        self.score.x = Window.width*0.2
+
+
+        build_version = '0.4'
+        self.version_build = Label(text = build_version, color=[1,0,0,1])
+        self.add_widget(self.version_build)
     
-        score_string = 'Water given: 10.5ml - Time run: 5h'
-        self.score2 = Label(text = score_string, color=[1,0,0,1])
-        self.score2.y = Window.height*0.85
-        self.score2.x = Window.width*0.7
      
  
  
@@ -668,9 +659,8 @@ class GUI(Widget):
             #update credits
             self.score.text = str(self.asteroidScore)
         self.bind(asteroidScore = check_score)
-        self.add_widget(self.score)
-        self.add_widget(self.score2)
-
+       
+      
  
         #now we create a ship object
         #self.ship = Ship(imageStr = './ship.png')
