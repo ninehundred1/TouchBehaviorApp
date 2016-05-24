@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # Filename: Touch_Training_menus_classes.py
 
-def TwoImages(stri):
-	print stri
+def TwoImages():
+	print 'strifun'
 
 version = '0.1'
 

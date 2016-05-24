@@ -17,8 +17,6 @@ from functools import partial
 from kivy.uix.popup import Popup
 from kivy.uix.dropdown import DropDown
 
-import Touch_Training_menu_classes
-
 import sys
 from random import *
  
@@ -247,8 +245,22 @@ class TopMenu(Paradigm_Base):
     This is the widget for the top menu. The buttons that are displayed are 
     defined in Button list. Each of those buttons has a drop down list of 
     further buttons, defined in menu_items.
-    If a button gets pressed, the function with the same name of the button 
-    is called from the module file Touch_Training_menus_classes.py
+    
+    To add a new paradigm, add the paradigm name to the 'button_text_label' list.
+    Also create a new .py module with the exact name without whitespace of what you entered in the list
+    as the main function that gets executed first.
+
+    Then use that as the .py name, but add 'Paradigm_' in front.
+
+    Example:
+    #your paradigm added to List
+        paradigmList = ['Two Images']
+    #the py file that has all the paradigm functions
+        Paradigm_TwoImages.py
+    #the first function in that py file
+        def TwoImages()
+  
+
 
     This class inherits from the Paradigm_Base class.
 
@@ -257,7 +269,7 @@ class TopMenu(Paradigm_Base):
     '''
     #setup the menu button names, inherit from above
     buttonList = ['Choose Paradigm', 'Paradigm Setup', 'Show Data', 'Pause/Stop', 'Copy data to USB']
- 
+    
     def __init__(self, **kwargs):
         super(TopMenu, self).__init__(**kwargs)
         #overwrite the basic layout from parent class
@@ -270,8 +282,10 @@ class TopMenu(Paradigm_Base):
         self.menu_color = [.8, .7,0, .9]
         self.menu_color_letters = [0.8, 1, 1, 1]
 
+        self.paradigmList = ['Two Images', 'MIRCs']
+
         self.menu_items = {
-                        0: ['Two Images', 'Mirc'],
+                        0: self.paradigmList,
                         1: ['Interval', 'Penalty'],
                         2: ['Plot Performance', 'Plot Responses'],
                         3: ['Pause', 'Continue','Abort'],
@@ -308,9 +322,21 @@ class TopMenu(Paradigm_Base):
     #call the function matching the string (make sure the name exist, without space)
     def menu_function_handler(self,button_text_label):
         #thismodule = sys.modules[__name__]
-        function=getattr(Touch_Training_menu_classes,button_text_label.replace(" ", "")) 
-        #this is calling the same function as the name of button. 
-        function('aaaaassss')  
+        #this will call the external module for paradigm.
+        #The module needs to start with Paradgim_ and have the same name as the button
+        #text without whitespace. The main function must also be the same name without
+        #whitespace.
+
+        #if the button is a paradigm, go to corresponding module function
+        if button_text_label in self.paradigmList:
+            #dynamically import
+            button_name = button_text_label.replace(" ", "")
+            m = __import__ ('Paradigm_'+button_name)
+            func = getattr(m,button_name)
+            func()
+            #function()
+        else:
+            print 'local function'
 
 
 
