@@ -69,7 +69,7 @@ class Paradigm_Base(Widget):
         self.layout.height = Window.height/2
         self.layout.x = Window.width/2 - self.layout.width/2
         self.layout.y = Window.height/2 - self.layout.height/2
-        self.num_presses = 0
+        self.data_from_paradigm = []
         self.add_widget(self.layout)
  
     def on_button_release(self, *args):
@@ -91,6 +91,17 @@ class Paradigm_Base(Widget):
         #now we send our new event with its name to the dispatcher
         self.dispatch('on_button_release') 
 
+    
+
+
+    def clear_screen(self, instance):
+        self.parent.canvas.clear()
+        self.remove_widget(self.layout)
+     
+    def start_new(self,instance):
+        self.clear_screen(instance)
+        print 'starting'
+         
     def addButtons(self):
         #now add as many buttons as you like
         for button_text_label in self.buttonList:
@@ -101,14 +112,19 @@ class Paradigm_Base(Widget):
             #when the button is released the custom_callback function is called
             temp_button.bind(on_release = self.custom_callback) 
             self.layout.add_widget(temp_button)
+
+    def give_reward(self):
+        print 'water..'
  
     def buildUp(self):
         self.addButtons()
+     
 
 
 
 
-class Paradigm_Two_choice_images(Paradigm_Base):
+
+class Paradigm_Two_choice_images2(Paradigm_Base):
     '''
     Paradigm that shows two images from file, with a button underneath the image.
     When the right button is clicked, there is a water reward.
@@ -125,7 +141,7 @@ class Paradigm_Two_choice_images(Paradigm_Base):
     buttonList = ['left', 'right']
  
     def __init__(self, **kwargs):
-        super(Paradigm_Two_choice_images, self).__init__(**kwargs)
+        super(Paradigm_Two_choice_images2, self).__init__(**kwargs)
         #overwrite the basic layout from parent class
         self.layout = BoxLayout(orientation = 'horizontal')
         self.layout.width = Window.width
@@ -240,6 +256,9 @@ class Start_Screen(Widget):
         print 'cont'
 
 
+
+
+
 class TopMenu(Paradigm_Base):
     '''
     This is the widget for the top menu. The buttons that are displayed are 
@@ -329,14 +348,60 @@ class TopMenu(Paradigm_Base):
 
         #if the button is a paradigm, go to corresponding module function
         if button_text_label in self.paradigmList:
-            #dynamically import
+            #before we start it we show the start screen
+            self.paradigm_start_screen() 
+            #dynamically import the py module requested (eg Paradigm_TwoImages.py)
             button_name = button_text_label.replace(" ", "")
             m = __import__ ('Paradigm_'+button_name)
+            #get the function with the name without Paradigm_ (eg TwoImages.py)
             func = getattr(m,button_name)
-            func()
+            #call the function which initialized the paradigm class and return the class instance
+            self.current_paradigm = func()
+            #now that we have the class in this workspace we can use it and call the other functions
+            self.current_paradigm.buildUp()
+            self.parent.add_widget(self.current_paradigm)
             #function()
         else:
             print 'local function'
+
+    def clear_start_screen(self, instance):
+        self.remove_widget(self.layout_start)
+        #self.remove_widget(self.txt_start)
+        #self.remove_widget(self.layout_start)
+
+
+    def paradigm_start_screen(self):
+        
+        #add background color and text
+        #with self.canvas.before:
+        #    Color(1,1,0,0.5)
+        #    self.bg_start =  Rectangle(pos=(Window.width*0.1,  Window.height*0.2),
+        #            size=(Window.width*0.8, Window.height*0.4))
+        #    self.txt_start = Label(text="Press start to start paradigm", color = (1,0.7,0,0.7), pos=(Window.width*0.1,  Window.height*0.3),
+        #            size=(Window.width*0.8, Window.height*0.4), font_size = 48)
+        #    #somehow below is required or the first buttons do not expand
+        #    w = Label(text='')
+
+        #make new float layer
+        self.layout_start =FloatLayout()
+        self.layout_start.width = Window.width*0.7
+        self.layout_start.height = Window.height*0.7
+        self.layout_start.x = Window.height*0.3
+        self.layout_start.y = Window.width*0.1
+        self.add_widget(self.layout_start)
+
+        #add button to layer
+        paradigm_start_button = Button(text='Start',   size_hint=(.2, .2),
+                pos_hint={'x':.28, 'y':.2})
+        paradigm_start_button.bind(on_press= self.clear_start_screen)
+        self.layout_start.add_widget(paradigm_start_button)
+
+        #add text to layer
+        self.txt_start = Label(text="Press start to start paradigm", color = (1,0.7,0,0.7), pos=(Window.width*0.14,  Window.height*0.3),
+                    size=(Window.width*0.8, Window.height*0.4), font_size = 48)
+        self.layout_start.add_widget(self.txt_start)
+      
+  
 
 
 
