@@ -72,25 +72,83 @@ class Paradigm_Two_choice_images(Paradigm_Base):
         self.data = Data_Class()
 
         #init preview
-        self.prev_string = Label(text = '-idle-', color=[1,0,0,1])
+        self.prev_string = Label(text = '-no stats yet-', color=[1,0,0,1])
         self.prev_string.y = Window.height*0.85
         self.prev_string.x = Window.width*0.4
         self.add_widget(self.prev_string)
+
+        #init other stuff
+        self.penalty = 2
+        self.interval = 1
+        self.reward_time = 1
+        self.last_was_correct = 0
 
 
         #start timer
         self.start_time = time.clock()
 
 
+    #Do deal with events and with timing the processes, below
+    #is a chronolical order of what happens after trial.
+    #To pause kivy you need to use clock schedule in between the timeline
+
     #what happen if a button is pressed
     def do_on_release(self):
         choice = self.buttonText
         self.remove_widget(self.stim_left)
         self.remove_widget(self.stim_right)
+        self.after_choice(choice)
+
+
+    def after_choice(self,choice):
         self.process_response(choice)
         self.show_data_preview()
-        self.set_up_trial()
+        #sequence will move on in process_response
+       
+        
+
+
+    #here you can pause the app without freezing it using clock to when to proceed to 
+    # next call
+    def wait_interval(self, dt):
+        if not self.last_was_correct:
+            popup_text = 'wrong - waiting for penalty delay and interval...'
+            self.block_screen(popup_text, self.penalty+self.interval, self.start_next)
+        else:   
+            popup_text = 'correct - waiting for interval...'
+            self.block_screen(popup_text, self.interval, self.start_next)
+        
+
+
+    def block_screen(self, message, time, function_to_call):
+        popup = Popup(title= message, pos_hint={'x': 0, 
+                            'y':0},  
+            size_hint=(None, None), size=(Window.width, Window.height*0.95))
+        popup.open()
+        #time the closing
+        Clock.schedule_once(popup.dismiss, time)
+        #time the continue to be right after the closing
+        Clock.schedule_once(function_to_call, time)
+
+
+    def block_screen_initialize(self, button_text, message):
+        content = Button(text=button_text,  pos_hint={'x': 800,'y':0},  
+            size_hint=(None, None), size=(Window.width*0.96, Window.height*0.14))
+        popup = Popup(title = message, content=content, pos_hint={'x': 0,'y':0},  
+            size_hint=(None, None), size=(Window.width, Window.height*0.95))
+        content.bind(on_press=popup.dismiss)
+        popup.open()
+
+
+    def start_next(self, dt):
+        self.choose_side()
         self.set_stimulus_images()
+        #display what the last trial was
+        message_middle = 'LAST TRIAL '+['WRONG -- ', 'CORRECT -- '][self.last_was_correct == 1]
+        #also show current stats preview in initialize screen
+        message_end = self.data.make_preview_string()
+        self.block_screen_initialize('Initialize Trial Here', message_middle+message_end)
+
 
     def process_response(self, choice):
         #log time
@@ -108,12 +166,13 @@ class Paradigm_Two_choice_images(Paradigm_Base):
                 self.data.left_correct += 1
                 #3 means correct choice made
                 self.data.all_responses.append(3)
-                #give reward
-                self.give_reward()
+                self.last_was_correct = 1
+                
             else:
                 #2 means wrong choice made
                 self.data.all_responses.append(2)
                 self.data.left_wrong += 1
+                self.last_was_correct = 0
 
         elif choice is 'right':
             self.data.all_sides_reponses.append(0)
@@ -121,14 +180,26 @@ class Paradigm_Two_choice_images(Paradigm_Base):
             if not self.stimulus_is_left:
                 self.data.right_correct += 1
                 self.data.all_responses.append(3)
-                self.give_reward()
+                self.last_was_correct = 1
+               
             else:
                 self.data.all_responses.append(2)
                 self.data.right_wrong += 1
+                self.last_was_correct = 0
         #if timeout
         elif choice is 'timeout':
             self.data.timeouts += 1
             self.data.all_responses.append(1)
+            self.last_was_correct = 1
+
+        #move on along trial here    
+        self.give_reward(self.reward_time)
+
+    def give_reward(self, time_open):
+        if self.last_was_correct:
+            self.block_screen('CORRECT - Giving reward', time_open, self.wait_interval)
+        else:
+            self.wait_interval('')
 
 
     def show_data_preview(self):
@@ -136,7 +207,7 @@ class Paradigm_Two_choice_images(Paradigm_Base):
         self.prev_string.text = new_prev_string
 
  
-    def set_up_trial(self):
+    def choose_side(self):
         self.stimulus_is_left = randint(0,1)
 
     def set_stimulus_images(self):
@@ -170,9 +241,16 @@ class Paradigm_Two_choice_images(Paradigm_Base):
 
     ##add start screen before start
     #def buildUp(self):
-    #    self.paradigm_start_screen()  
     #    self.addButtons()
-        
+    #    self.block_screen_initialize('Initialize Trial Here', 'STARTING SESSION')
+    
+    def start_new(self):
+        self.block_screen_initialize('Initialize Trial Here', 'STARTING SESSION')
+
+    def clear_start_screen(self, instance):
+        self.remove_widget(self.layout_start)
+        self.block_screen_initialize('Initialize Trial Here', 'STARTING SESSION')
+
 
 
 class Data_Class(object):
