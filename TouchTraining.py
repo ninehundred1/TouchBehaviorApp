@@ -16,6 +16,8 @@ from kivy.graphics import Rectangle, Color, Canvas
 from functools import partial
 from kivy.uix.popup import Popup
 from kivy.uix.dropdown import DropDown
+from kivy.uix.slider import Slider
+from kivy.uix.textinput import TextInput
 
 import sys
 from random import *
@@ -71,6 +73,21 @@ class Paradigm_Base(Widget):
         self.layout.y = Window.height/2 - self.layout.height/2
         self.data_from_paradigm = []
         self.add_widget(self.layout)
+
+
+        #these settings are what can be changed in the Paradigm Setup
+        paradigm_setup_values = {
+            'total trials': 100,
+            'water reward(s)': 0.01,
+            'reward pulses': 1,
+            'start difficulty': 0,
+            'input ignored(s)':0,
+            'penalty(s)':5,
+            'interval(s)': 2,
+            'timout(s)': 10,
+            'repeat one side': 0
+            }
+
  
     def on_button_release(self, *args):
         #this needs to be implemented for the kivy dispatcher if we make custom events, but is empty
@@ -122,85 +139,6 @@ class Paradigm_Base(Widget):
 
 
 
-
-
-class Paradigm_Two_choice_images2(Paradigm_Base):
-    '''
-    Paradigm that shows two images from file, with a button underneath the image.
-    When the right button is clicked, there is a water reward.
-    Correct and incorrect presses are stores to be analyzed for performance.
-
-    This class inherits from the main menu class and sets the choice buttons
-    as well as adds an image as the stimulus.
-    Further functionality is added
-
-    parameter:
-    inherits from Paradigm_Base
-    '''
-    #the buttons we want
-    buttonList = ['left', 'right']
- 
-    def __init__(self, **kwargs):
-        super(Paradigm_Two_choice_images2, self).__init__(**kwargs)
-        #overwrite the basic layout from parent class
-        self.layout = BoxLayout(orientation = 'horizontal')
-        self.layout.width = Window.width
-        self.layout.height = Window.height/8
-        self.layout.x = 0
-        self.layout.y = 0
-        self.add_widget(self.layout)
-
-        #empty images to init
-        self.stim_left =  Widget()
-        self.stim_right =  Widget()
-        self.image_correct = Image(source = 'correct_l.jpg')
-        self.image_wrong = Image(source = 'wrong_l.jpg')
-        self.left_is_correct = 1
-  
-    #what happen if a button is pressed
-    def do_on_release(self):
-        print self.buttonText
-        self.remove_widget(self.stim_left)
-        self.remove_widget(self.stim_right)
-        self.set_up_trial()
-        self.set_stimulus_images()
- 
-    def set_up_trial(self):
-        self.left_is_correct = randint(0,1)
-
-    def set_stimulus_images(self):
-        image_size_y = Window.height
-        image_size_x = Window.width*0.7
-        print self.left_is_correct
-        if self.left_is_correct == 1:
-            #left
-            print 'here'
-            self.stim_left = self.image_correct
-            self.stim_left.size = (image_size_y,image_size_x)
-            self.stim_left.pos = (-Window.width*0.1, 10)
-            self.stim_left.opacity = 1
-            #right
-            self.stim_right = self.image_wrong
-            self.stim_right.size = (Window.height*2,Window.height)
-            self.stim_right.pos = (0, 0)
-            self.stim_right.opacity = 1
-        else:
-            #left
-            self.stim_right = self.image_wrong
-            self.stim_right.size = (image_size_y,image_size_x)
-            self.stim_right.pos = (-Window.width*0.1, 10)
-            self.stim_right.opacity = 1
-            #right
-            self.stim_left = self.image_correct
-            self.stim_left.size = (Window.height*2,Window.height)
-            self.stim_left.pos = (0, 0)
-            self.stim_left.opacity = 1
-       
-        self.add_widget(self.stim_left)
-        self.add_widget(self.stim_right)
-        
-
- 
 
 
 class Start_Screen(Widget):
@@ -292,24 +230,49 @@ class TopMenu(Paradigm_Base):
     def __init__(self, **kwargs):
         super(TopMenu, self).__init__(**kwargs)
         #overwrite the basic layout from parent class
-        self.layout = BoxLayout(orientation = 'horizontal')
-        self.layout.width = Window.width
-        self.layout.height = Window.height*0.05
-        self.layout.x = 0
-        self.layout.y =  self.layout.height*19
-        self.add_widget(self.layout)
+        self.layout_top_menu = BoxLayout(orientation = 'horizontal')
+        self.layout_top_menu.width = Window.width
+        self.layout_top_menu.height = Window.height*0.05
+        self.layout_top_menu.x = 0
+        self.layout_top_menu.y =  self.layout_top_menu.height*19
+        self.add_widget(self.layout_top_menu)
         self.menu_color = [.8, .7,0, .9]
         self.menu_color_letters = [0.8, 1, 1, 1]
+        self.temp_val_setting = 0
 
         self.paradigmList = ['Two Images', 'MIRCs']
 
         self.menu_items = {
                         0: self.paradigmList,
-                        1: ['Interval', 'Penalty'],
+                        1: [' - '],
                         2: ['Plot Performance', 'Plot Responses'],
                         3: ['Pause', 'Continue','Abort'],
                         4: ['Copy to USB']}
      
+
+        self.paradigm_setup_values = {
+            'total trials': 100,
+            'water reward(ms)': 10,
+            'reward pulses': 1,
+            'start difficulty': 0,
+            'input ignored(s)':0,
+            'penalty(s)':5,
+            'interval(s)': 2,
+            'timout(s)': 10,
+            'repeat one side': 0
+            }
+
+        self.paradigm_setup_value_ranges = {
+            'total trials': [0, 1000],
+            'water reward(s)': [0, 1000],
+            'reward pulses': [1,5],
+            'start difficulty': [0, 1.0],
+            'input ignored(s)':[0,10],
+            'penalty(s)':[0, 40],
+            'interval(s)': [0, 40],
+            'timout(s)': [0,40],
+            'repeat one side': [0,50]
+            }
   
     def addButtons(self):
         for i, button_text_label in enumerate(self.buttonList):
@@ -319,23 +282,32 @@ class TopMenu(Paradigm_Base):
             temp_button.background_color =  [.8, .7,0, .9]
             #now add dropdown buttons
             dropdown = DropDown()
-            for submenu_string in self.menu_items[i]:
-                # when adding widgets, we need to specify the height manually (disabling
-                # the size_hint_y) so the dropdown can calculate the area it needs.
-                btn = Button(text=submenu_string, size_hint_y=None, height=44)
-                btn.background_color =  [.8, .9,.7, .9]
-                # for each button, attach a callback that will call the select() method
-                # on the dropdown. We'll pass the text of the button as the data of the
-                # selection.
-                btn.bind(on_release=lambda btn: dropdown.select(btn.text))
-                #then add the button inside the dropdown
-                dropdown.add_widget(btn)
+            #if in parameter settings, combine dict to string
+            if i is 1:
+                for y in self.paradigm_setup_values:
+                    submenu_string = y+': '+str(self.paradigm_setup_values[y])
+                    btn = Button(text=submenu_string, size_hint_y=None, height=44)
+                    btn.background_color =  [.8, .9,.7, .9]
+                    btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+                    dropdown.add_widget(btn)
+            else:
+                for submenu_string in self.menu_items[i]:
+                    # when adding widgets, we need to specify the height manually (disabling
+                    # the size_hint_y) so the dropdown can calculate the area it needs.
+                    btn = Button(text=submenu_string, size_hint_y=None, height=44)
+                    btn.background_color =  [.8, .9,.7, .9]
+                    # for each button, attach a callback that will call the select() method
+                    # on the dropdown. We'll pass the text of the button as the data of the
+                    # selection.
+                    btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+                    #then add the button inside the dropdown
+                    dropdown.add_widget(btn)
             #bind the dropdown to the main menu button
             temp_button.bind(on_release = dropdown.open) 
             dropdown.bind(on_select=lambda instance, x: self.menu_function_handler(x))
             #get info about what has been pressed
             #dropdown.bind(on_select=lambda instance, x: setattr(temp_button, 'text', x))
-            self.layout.add_widget(temp_button)
+            self.layout_top_menu.add_widget(temp_button)
  
 
     #call the function matching the string (make sure the name exist, without space)
@@ -362,7 +334,61 @@ class TopMenu(Paradigm_Base):
             self.parent.add_widget(self.current_paradigm)
             #function()
         else:
-            print 'local function'
+            #if paradigm setting is pressed
+            name_only = button_text_label.rsplit(':', 1)[0]
+            value_only = int(button_text_label.rsplit(':', 1)[1])
+            min = self.paradigm_setup_value_ranges[name_only][0]
+            max = self.paradigm_setup_value_ranges[name_only][1]
+            if name_only in self.paradigm_setup_values:
+                self.get_user_value(name_only, value_only, min, max)
+                #update the field 
+                self.paradigm_setup_values[name_only] = self.temp_val_setting
+                print self.temp_val_setting
+            self.update_menu_button()
+    
+
+    def get_user_value(self, button_text, current_val, min_, max_):
+        
+        #make label with current value
+        l = Label(text=str(current_val), color = (1,1,0,1), font_size = 40)
+        #make slider for popup
+        s = Slider(min=min_, max=max_, value=self.temp_val_setting)
+        #update value
+        def on_slider_move(instance,value):
+            l.text = str(int(value))
+            self.temp_val_setting = int(value)
+            
+        s.bind(value=on_slider_move)
+
+        #make button for popup
+        content = Button(text='Change Parameter '+button_text, background_color=(0, 1, 0, .5),font_size = 20)
+        box = BoxLayout(orientation = 'vertical')
+        box.add_widget(l)
+        box.add_widget(s)
+        box.add_widget(content)
+        popup = Popup(title ='Please set new value for '+button_text, content=box, pos_hint={'x': 0,'y':0},  
+            size_hint=(None, None), size=(Window.width, Window.height*0.95))
+        content.bind(on_press=popup.dismiss)
+        popup.open()   
+
+    def OnSliderValueChange(self):
+        pass
+
+    def update_menu_button(self):
+        self.remove_widget(self.layout_top_menu)
+        self.layout_top_menu = BoxLayout(orientation = 'horizontal')
+        self.layout_top_menu.width = Window.width
+        self.layout_top_menu.height = Window.height*0.05
+        self.layout_top_menu.x = 0
+        self.layout_top_menu.y =  self.layout_top_menu.height*19
+        self.add_widget(self.layout_top_menu)
+        self.menu_color = [.8, .7,0, .9]
+        self.menu_color_letters = [0.8, 1, 1, 1]
+
+        self.paradigm_setup_values['total trials'] = 200
+        self.addButtons()
+
+
 
     def clear_start_screen(self, instance):
         self.remove_widget(self.layout_start)
